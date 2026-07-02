@@ -1,0 +1,791 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+<title>SOFİGRAM</title>
+<style>
+:root{--bg:#000;--surface:#1a1a1a;--text:#fff;--text-secondary:#a8a8a8;--border:#262626;--accent:#0095f6;--danger:#ed4956;--gradient:linear-gradient(45deg,#f09433,#e6683c,#dc2743,#cc2366,#bc1888);--msg-out:#3797f0;--msg-in:#262626;--live-red:#ff3b30;--star-gold:#ffd700;}
+*{margin:0;padding:0;box-sizing:border-box;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;-webkit-tap-highlight-color:transparent;user-select:none;}
+body{background:#000;display:flex;justify-content:center;align-items:center;min-height:100vh;}
+#app{width:430px;max-width:100vw;height:100vh;max-height:932px;background:var(--bg);color:var(--text);overflow:hidden;position:relative;border-radius:8px;}
+.screen{position:absolute;inset:0;display:none;flex-direction:column;overflow-y:auto;overflow-x:hidden;scrollbar-width:none;}
+.screen::-webkit-scrollbar{display:none;}
+.screen.active{display:flex;}
+.splash{background:#000;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:20px;}
+.splash img{width:120px;animation:pulse 1.2s ease-in-out infinite;}
+@keyframes pulse{0%,100%{transform:scale(1);}50%{transform:scale(1.08);}}
+input,textarea{width:100%;padding:12px 14px;margin:6px 0;border:1px solid var(--border);border-radius:8px;background:var(--surface);color:var(--text);font-size:.95rem;outline:none;}
+button{width:100%;padding:12px;margin:8px 0;background:var(--accent);color:#fff;border:none;border-radius:8px;font-weight:600;font-size:.95rem;cursor:pointer;}
+button.outline{background:transparent;border:1px solid var(--border);color:var(--text);}
+button.danger{background:var(--danger);}
+button.small{width:auto;padding:8px 16px;font-size:.85rem;border-radius:6px;}
+button.live-btn{background:var(--live-red);}
+.link{color:var(--accent);cursor:pointer;font-weight:500;font-size:.9rem;}
+.divider{display:flex;align-items:center;gap:10px;color:var(--text-secondary);font-size:.85rem;margin:15px 0;}
+.divider::before,.divider::after{content:'';flex:1;height:1px;background:var(--border);}
+.header{display:flex;align-items:center;justify-content:space-between;padding:10px 16px;border-bottom:1px solid var(--border);position:sticky;top:0;background:var(--bg);z-index:10;min-height:48px;}
+.header img.logo{height:30px;}
+.header-icons{display:flex;gap:18px;cursor:pointer;align-items:center;}
+.header-icons svg{width:24px;height:24px;fill:var(--text);}
+.badge-dot{position:absolute;top:-6px;right:-10px;background:var(--danger);color:#fff;font-size:.7rem;padding:2px 6px;border-radius:12px;font-weight:700;min-width:18px;text-align:center;}
+.stories{display:flex;gap:14px;padding:12px 16px;overflow-x:auto;scrollbar-width:none;border-bottom:1px solid var(--border);}
+.story-item{display:flex;flex-direction:column;align-items:center;gap:5px;cursor:pointer;min-width:64px;}
+.story-ring{width:64px;height:64px;border-radius:50%;padding:2.5px;background:var(--gradient);position:relative;}
+.story-ring.gray{background:#444;}
+.story-ring img{width:100%;height:100%;border-radius:50%;border:2px solid var(--bg);object-fit:cover;}
+.story-plus{position:absolute;bottom:0;right:0;background:var(--accent);color:#fff;width:20px;height:20px;border-radius:50%;font-size:14px;display:flex;align-items:center;justify-content:center;border:2px solid var(--bg);}
+.story-item span{font-size:.7rem;max-width:64px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+.post{margin:0 0 16px;border-bottom:1px solid var(--border);}
+.post-header{display:flex;align-items:center;justify-content:space-between;padding:10px 16px;}
+.post-user{display:flex;align-items:center;gap:10px;cursor:pointer;}
+.post-user img{width:32px;height:32px;border-radius:50%;object-fit:cover;}
+.verify{width:16px!important;height:16px!important;border-radius:0!important;margin-left:2px;object-fit:contain!important;}
+.post-img{width:100%;aspect-ratio:1;object-fit:cover;cursor:pointer;background:#111;}
+.post-actions{display:flex;padding:8px 16px;gap:14px;align-items:center;}
+.post-actions svg{width:24px;height:24px;cursor:pointer;fill:var(--text);}
+.post-actions .save{margin-left:auto;}
+.post-likes{padding:0 16px;font-weight:600;font-size:.9rem;}
+.post-caption{padding:4px 16px 2px;font-size:.9rem;}
+.post-caption b{margin-right:6px;}
+.post-comments{padding:2px 16px 10px;color:var(--text-secondary);font-size:.85rem;cursor:pointer;}
+.post-time{padding:0 16px 10px;color:var(--text-secondary);font-size:.7rem;text-transform:uppercase;}
+.comment-item{padding:4px 16px;font-size:.85rem;}
+.tab-bar{position:absolute;bottom:0;left:0;right:0;display:flex;justify-content:space-around;align-items:center;background:var(--bg);border-top:1px solid var(--border);padding:8px 0;z-index:20;height:50px;}
+.tab-bar svg{width:26px;height:26px;cursor:pointer;fill:var(--text);opacity:.6;}
+.tab-bar svg.active{opacity:1;}
+.tab-bar .plus-icon{width:30px;height:30px;}
+.profile-header{display:flex;padding:16px;gap:20px;align-items:center;}
+.profile-header img{width:80px;height:80px;border-radius:50%;object-fit:cover;cursor:pointer;}
+.profile-stats{display:flex;gap:20px;text-align:center;flex:1;justify-content:space-around;}
+.profile-stats div{font-size:.85rem;cursor:pointer;}
+.profile-stats b{font-size:1.1rem;display:block;}
+.profile-bio{padding:0 16px 12px;font-size:.9rem;line-height:1.4;}
+.profile-bio b{display:block;}
+.profile-buttons{display:flex;gap:8px;padding:0 16px 16px;}
+.profile-buttons button{flex:1;padding:8px;font-size:.85rem;}
+.highlights{display:flex;gap:16px;padding:0 16px 16px;overflow-x:auto;}
+.grid{display:grid;grid-template-columns:repeat(3,1fr);gap:2px;}
+.grid img,.grid video{width:100%;aspect-ratio:1;object-fit:cover;cursor:pointer;}
+.tabs{display:flex;justify-content:space-around;border-top:1px solid var(--border);padding:10px 0;}
+.tabs svg{width:28px;height:28px;cursor:pointer;fill:var(--text);opacity:.5;}
+.tabs svg.active{opacity:1;}
+.chat-item{display:flex;align-items:center;gap:12px;padding:12px 16px;cursor:pointer;border-bottom:1px solid var(--border);}
+.chat-item img{width:50px;height:50px;border-radius:50%;object-fit:cover;}
+.chat-item .info{flex:1;min-width:0;}
+.chat-item .info p{font-size:.8rem;color:var(--text-secondary);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.unread-dot{width:8px;height:8px;border-radius:50%;background:var(--accent);}
+.reel-container{height:calc(100% - 50px);overflow-y:scroll;scroll-snap-type:y mandatory;background:#000;}
+.reel{height:100%;scroll-snap-align:start;background:#000;display:flex;align-items:center;justify-content:center;position:relative;}
+.reel video{width:100%;height:100%;object-fit:cover;}
+.reel-actions{position:absolute;right:12px;bottom:100px;display:flex;flex-direction:column;gap:20px;color:#fff;align-items:center;}
+.reel-actions svg{width:28px;height:28px;cursor:pointer;fill:#fff;}
+.reel-actions .action-count{font-size:.75rem;color:#fff;text-align:center;}
+.reel-info{position:absolute;left:12px;bottom:100px;color:#fff;max-width:70%;}
+.back-btn{position:absolute;top:10px;left:10px;z-index:30;cursor:pointer;background:rgba(0,0,0,.5);border-radius:50%;width:36px;height:36px;display:flex;align-items:center;justify-content:center;color:#fff;font-size:18px;font-weight:bold;}
+.notification-item{display:flex;align-items:center;gap:12px;padding:12px 16px;border-bottom:1px solid var(--border);cursor:pointer;}
+.notification-item img{width:40px;height:40px;border-radius:50%;object-fit:cover;}
+.notification-item .notif-text{flex:1;font-size:.9rem;}
+.notification-item .notif-btns{display:flex;gap:8px;}
+.toast{position:fixed;bottom:70px;left:50%;transform:translateX(-50%);background:#333;color:#fff;padding:10px 20px;border-radius:20px;font-size:.9rem;z-index:200;animation:fadeInOut 2s ease forwards;white-space:nowrap;}
+@keyframes fadeInOut{0%{opacity:0;}15%{opacity:1;}85%{opacity:1;}100%{opacity:0;}}
+.settings-section{padding:12px 16px;border-bottom:1px solid var(--border);}
+.settings-section h3{font-size:.85rem;color:var(--text-secondary);margin-bottom:8px;text-transform:uppercase;}
+.settings-row{display:flex;align-items:center;justify-content:space-between;padding:14px 0;cursor:pointer;}
+.settings-row span:last-child{color:var(--text-secondary);font-size:.9rem;}
+.story-viewer{position:fixed;inset:0;background:#000;z-index:50;display:flex;align-items:center;justify-content:center;}
+.story-viewer img,.story-viewer video{max-width:100%;max-height:100%;object-fit:contain;}
+.story-progress{position:absolute;top:10px;left:10px;right:10px;display:flex;gap:4px;z-index:51;}
+.progress-bar{flex:1;height:2px;background:rgba(255,255,255,.3);border-radius:1px;overflow:hidden;}
+.progress-fill{height:100%;background:#fff;width:0%;transition:width .1s linear;}
+.modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,.8);z-index:150;display:flex;align-items:center;justify-content:center;}
+.modal-box{background:var(--surface);border-radius:12px;padding:20px;width:90%;max-width:350px;max-height:80vh;overflow-y:auto;}
+.modal-box h3{margin-bottom:12px;font-size:1rem;}
+.story-nav-left,.story-nav-right{position:absolute;top:50%;transform:translateY(-50%);z-index:52;width:44px;height:44px;font-size:28px;color:#fff;display:flex;align-items:center;justify-content:center;cursor:pointer;background:rgba(0,0,0,.3);border-radius:50%;}
+.story-nav-left{left:10px;}
+.story-nav-right{right:10px;}
+.view-count-badge{position:absolute;bottom:100px;left:16px;color:#fff;font-size:.85rem;background:rgba(0,0,0,.5);padding:4px 10px;border-radius:20px;cursor:pointer;z-index:53;}
+.live-badge{background:var(--live-red);color:#fff;padding:2px 8px;border-radius:4px;font-size:.7rem;font-weight:700;}
+.live-chat{position:absolute;bottom:70px;left:0;right:0;padding:0 16px;max-height:200px;overflow-y:auto;z-index:25;}
+.live-chat-item{color:#fff;font-size:.8rem;padding:2px 0;}
+.star-balance{position:absolute;top:50px;right:10px;z-index:30;background:rgba(0,0,0,.6);color:var(--star-gold);padding:6px 12px;border-radius:20px;font-size:.85rem;font-weight:700;}
+.gift-panel{display:flex;gap:8px;padding:8px;flex-wrap:wrap;justify-content:center;}
+.gift-item{background:rgba(255,255,255,.1);border:1px solid rgba(255,255,255,.2);border-radius:12px;padding:10px;text-align:center;cursor:pointer;min-width:70px;}
+.gift-item .gift-emoji{font-size:2rem;}
+.gift-item .gift-price{color:var(--star-gold);font-size:.8rem;font-weight:700;}
+.camera-preview{width:100%;height:100%;object-fit:cover;position:absolute;inset:0;}
+.camera-toggle{position:absolute;bottom:100px;right:20px;z-index:30;background:rgba(0,0,0,.5);color:#fff;border:none;border-radius:50%;width:44px;height:44px;font-size:1.5rem;cursor:pointer;}
+.live-controls{position:absolute;top:10px;right:10px;z-index:35;display:flex;gap:8px;}
+.live-end-btn{background:var(--live-red);color:#fff;border:none;border-radius:20px;padding:8px 16px;font-size:.8rem;font-weight:700;cursor:pointer;}
+</style>
+</head>
+<body>
+<div id="app"></div>
+<script>
+const tg = window.Telegram?.WebApp;
+if (tg) { tg.ready(); tg.expand(); }
+
+const API = location.origin + '/api';
+const WS_URL = (location.protocol === 'https:' ? 'wss://' : 'ws://') + location.host + '/ws';
+const VERIFY_ICON = 'https://i.hizliresim.com/bj5767k.png';
+const FOUNDER_ICON = 'https://i.hizliresim.com/6kfd3ut.png';
+const LOGO = 'https://i.hizliresim.com/s7egwdu.png';
+const CHAT_BG = 'https://i.hizliresim.com/2kq7o8l.png';
+
+const I = {
+  home:'<svg viewBox="0 0 24 24"><path d="M22 22H2V11.543L12 2l10 9.543z" fill="currentColor"/></svg>',
+  homeO:'<svg viewBox="0 0 24 24"><path d="M9.005 16.545a2.997 2.997 0 012.997-2.997h0A2.997 2.997 0 0115 16.545V22h7V11.543L12 2 2 11.543V22h7.005z" fill="none" stroke="currentColor" stroke-width="2"/></svg>',
+  search:'<svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="6" fill="none" stroke="currentColor" stroke-width="2"/><path d="M20 20l-3.5-3.5" stroke="currentColor" stroke-width="2"/></svg>',
+  plus:'<svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10" fill="none" stroke="currentColor" stroke-width="2"/><path d="M12 7v10M7 12h10" stroke="currentColor" stroke-width="2"/></svg>',
+  reels:'<svg viewBox="0 0 24 24"><rect x="2" y="2" width="20" height="20" rx="4" fill="currentColor"/></svg>',
+  reelsO:'<svg viewBox="0 0 24 24"><rect x="2" y="2" width="20" height="20" rx="4" fill="none" stroke="currentColor" stroke-width="2"/></svg>',
+  profile:'<svg viewBox="0 0 24 24"><circle cx="12" cy="8" r="5" fill="currentColor"/><path d="M20 21a8 8 0 10-16 0" fill="currentColor"/></svg>',
+  profileO:'<svg viewBox="0 0 24 24"><circle cx="12" cy="8" r="5" fill="none" stroke="currentColor" stroke-width="2"/><path d="M20 21a8 8 0 10-16 0" fill="none" stroke="currentColor" stroke-width="2"/></svg>',
+  heart:'<svg viewBox="0 0 24 24"><path d="M20.84 4.61a5.5 5.5 0 00-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 00-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 000-7.78z" fill="currentColor"/></svg>',
+  heartO:'<svg viewBox="0 0 24 24"><path d="M20.84 4.61a5.5 5.5 0 00-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 00-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 000-7.78z" fill="none" stroke="currentColor" stroke-width="2"/></svg>',
+  comment:'<svg viewBox="0 0 24 24"><path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z" fill="none" stroke="currentColor" stroke-width="2"/></svg>',
+  share:'<svg viewBox="0 0 24 24"><line x1="22" y1="2" x2="11" y2="13" stroke="currentColor" stroke-width="2"/><polygon points="22 2 15 22 11 13 2 9 22 2" fill="none" stroke="currentColor" stroke-width="2"/></svg>',
+  save:'<svg viewBox="0 0 24 24"><polygon points="19 21 12 16 5 21 5 3 19 3 19 21" fill="none" stroke="currentColor" stroke-width="2"/></svg>',
+  grid:'<svg viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="7" fill="currentColor"/><rect x="14" y="3" width="7" height="7" fill="currentColor"/><rect x="3" y="14" width="7" height="7" fill="currentColor"/><rect x="14" y="14" width="7" height="7" fill="currentColor"/></svg>',
+  gridO:'<svg viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="7" fill="none" stroke="currentColor" stroke-width="2"/><rect x="14" y="3" width="7" height="7" fill="none" stroke="currentColor" stroke-width="2"/><rect x="3" y="14" width="7" height="7" fill="none" stroke="currentColor" stroke-width="2"/><rect x="14" y="14" width="7" height="7" fill="none" stroke="currentColor" stroke-width="2"/></svg>',
+  dots:'<svg viewBox="0 0 24 24"><circle cx="12" cy="5" r="1.5" fill="currentColor"/><circle cx="12" cy="12" r="1.5" fill="currentColor"/><circle cx="12" cy="19" r="1.5" fill="currentColor"/></svg>',
+  back:'<svg viewBox="0 0 24 24"><path d="M19 12H5M12 19l-7-7 7-7" fill="none" stroke="currentColor" stroke-width="2"/></svg>',
+  notify:'<svg viewBox="0 0 24 24"><path d="M20.84 4.61a5.5 5.5 0 00-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 00-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 000-7.78z" fill="none" stroke="currentColor" stroke-width="2"/></svg>',
+  msg:'<svg viewBox="0 0 24 24"><line x1="22" y1="2" x2="11" y2="13" stroke="currentColor" stroke-width="2"/><polygon points="22 2 15 22 11 13 2 9 22 2" fill="none" stroke="currentColor" stroke-width="2"/></svg>'
+};
+
+const APP = document.getElementById('app');
+let currentUser = null;
+let screen = 'splash';
+let profileViewId = null;
+let profileTab = 'grid';
+let storyViewData = null;
+let ws = null;
+let STATE = { posts: [], reels: [], stories: [], notifications: [], rooms: [], activeStream: null };
+let liveRTC = { pc: {}, localStream: null, cameraFacing: 'user' };
+
+function toast(m){ let t=document.createElement('div'); t.className='toast'; t.textContent=m; document.body.appendChild(t); setTimeout(()=>t.remove(),2000); }
+function fmt(n){ if(n>=1000000) return (n/1000000).toFixed(1).replace(/\.0$/,'')+'M'; if(n>=1000) return (n/1000).toFixed(1).replace(/\.0$/,'')+'B'; return ''+n; }
+function timeAgo(ts){ let s=Math.floor((Date.now()-ts)/1000); if(s<60)return s+' sn'; let m=Math.floor(s/60); if(m<60)return m+' dk'; let h=Math.floor(m/60); if(h<24)return h+' sa'; return Math.floor(h/24)+' g'; }
+
+// ---------- API helper ----------
+async function api(path, opts = {}) {
+  opts.headers = opts.headers || {};
+  if (currentUser) opts.headers['x-user-id'] = currentUser.id;
+  if (opts.body && !(opts.body instanceof FormData)) {
+    opts.headers['Content-Type'] = 'application/json';
+    opts.body = JSON.stringify(opts.body);
+  }
+  const res = await fetch(API + path, opts);
+  const data = await res.json().catch(() => ({}));
+  if (!res.ok) throw new Error(data.error || 'Hata');
+  return data;
+}
+
+// ---------- WebSocket ----------
+function connectWS() {
+  ws = new WebSocket(WS_URL);
+  ws.onopen = () => ws.send(JSON.stringify({ type: 'auth', userId: currentUser.id }));
+  ws.onmessage = (ev) => {
+    let msg; try { msg = JSON.parse(ev.data); } catch { return; }
+    handleWSMessage(msg);
+  };
+  ws.onclose = () => { setTimeout(() => { if (currentUser) connectWS(); }, 1500); };
+}
+
+function handleWSMessage(msg) {
+  if (msg.type === 'post:new') { STATE.posts.unshift(msg.post); if (screen === 'feed') renderFeed(); }
+  else if (msg.type === 'post:update') { let i = STATE.posts.findIndex(p => p.id === msg.post.id); if (i > -1) STATE.posts[i] = msg.post; if (screen === 'feed') renderFeed(); }
+  else if (msg.type === 'reel:new') { STATE.reels.unshift(msg.reel); if (screen === 'reels') renderReels(); }
+  else if (msg.type === 'reel:update') { let i = STATE.reels.findIndex(r => r.id === msg.reel.id); if (i > -1) STATE.reels[i] = msg.reel; }
+  else if (msg.type === 'story:new') { STATE.stories.push(msg.story); if (screen === 'feed') renderFeed(); }
+  else if (msg.type === 'notification') { STATE.notifications.unshift(msg.notification); updateNotifBadge(); }
+  else if (msg.type === 'message:new') { if (screen === 'chat' && window.__currentRoomId === msg.message.roomId) appendChatMessage(msg.message); else toast('💬 Yeni mesaj'); }
+  else if (msg.type === 'live:start') { STATE.activeStream = msg.stream; if (screen === 'feed') renderFeed(); }
+  else if (msg.type === 'live:end') { if (STATE.activeStream?.id === msg.streamId) STATE.activeStream = null; if (screen === 'live') { toast('Yayın sona erdi'); navigate('feed'); } }
+  else if (msg.type === 'live:viewer_count') { let el = document.getElementById('viewerCount'); if (el) el.textContent = msg.count + ' izleyici'; }
+  else if (msg.type === 'live:chat') { appendLiveChat(msg.chat); }
+  else if (msg.type === 'webrtc:viewer_joined') { startBroadcastToViewer(msg.viewerId); }
+  else if (msg.type === 'webrtc:offer') { handleWebrtcOffer(msg); }
+  else if (msg.type === 'webrtc:answer') { handleWebrtcAnswer(msg); }
+  else if (msg.type === 'webrtc:ice') { handleWebrtcIce(msg); }
+  else if (msg.type === 'user:update') { if (currentUser && msg.user.id === currentUser.id) Object.assign(currentUser, msg.user); }
+}
+
+function updateNotifBadge() {
+  let c = STATE.notifications.filter(n => !n.read).length;
+  let el = document.getElementById('notifBadge');
+  if (el) el.outerHTML = c > 0 ? `<span class="badge-dot" id="notifBadge">${c}</span>` : '<span id="notifBadge"></span>';
+}
+
+function render() {
+  APP.innerHTML = '';
+  if (screen === 'splash') renderSplash();
+  else if (screen === 'auth') renderAuth();
+  else if (screen === 'feed') renderFeed();
+  else if (screen === 'search') renderSearch();
+  else if (screen === 'reels') renderReels();
+  else if (screen === 'messages') renderMessages();
+  else if (screen === 'profile') renderProfile();
+  else if (screen === 'settings') renderSettings();
+  else if (screen === 'create') renderCreate();
+  else if (screen === 'logs') renderLogs();
+  else if (screen === 'chat') renderChat();
+  else if (screen === 'notifications') renderNotifications();
+  else if (screen === 'editProfile') renderEditProfile();
+  else if (screen === 'live') renderLive();
+  if (!['splash', 'auth', 'live'].includes(screen)) {
+    APP.insertAdjacentHTML('beforeend', renderTabBar());
+    bindTabEvents();
+  }
+}
+function renderTabBar() {
+  return `<div class="tab-bar">
+    <span data-nav="feed">${screen==='feed'?I.home:I.homeO}</span>
+    <span data-nav="search">${I.search}</span>
+    <span data-nav="create" class="plus-icon">${I.plus}</span>
+    <span data-nav="reels">${screen==='reels'?I.reels:I.reelsO}</span>
+    <span data-nav="profile">${screen==='profile'?I.profile:I.profileO}</span>
+  </div>`;
+}
+function bindTabEvents(){ document.querySelectorAll('.tab-bar span[data-nav]').forEach(el=>{ el.onclick=()=>{ let s=el.dataset.nav; if(s==='profile') profileViewId=currentUser.id; profileTab='grid'; navigate(s); }; }); }
+function navigate(s){ screen=s; render(); }
+
+// ================= SPLASH / AUTH =================
+function renderSplash(){
+  APP.innerHTML = `<div class="screen splash active"><img src="${LOGO}"></div>`;
+  const savedId = localStorage.getItem('sofigram_uid');
+  setTimeout(async () => {
+    if (savedId) {
+      try {
+        currentUser = { id: savedId };
+        const { user } = await api('/me');
+        currentUser = user;
+        connectWS();
+        await loadInitialData();
+        navigate('feed');
+        return;
+      } catch { localStorage.removeItem('sofigram_uid'); }
+    }
+    navigate('auth');
+  }, 1500);
+}
+
+async function loadInitialData() {
+  const [p, r, s, n, rm, live] = await Promise.all([
+    api('/posts'), api('/reels'), api('/stories'), api('/notifications'), api('/rooms'), api('/live/active')
+  ]);
+  STATE.posts = p.posts; STATE.reels = r.reels; STATE.stories = s.stories;
+  STATE.notifications = n.notifications; STATE.rooms = rm.rooms; STATE.activeStream = live.stream;
+}
+
+function renderAuth(){
+  APP.innerHTML = `
+  <div class="screen active" style="justify-content:center;">
+    <div style="max-width:350px;width:100%;margin:auto;padding:20px;text-align:center;">
+      <img src="${LOGO}" style="width:150px;margin-bottom:30px;">
+      <div id="loginForm">
+        <input id="loginId" placeholder="Kullanıcı adı veya email">
+        <input id="loginPass" type="password" placeholder="Şifre">
+        <button onclick="handleLogin()">Giriş Yap</button>
+        <p class="link" onclick="showForgot()" style="margin-top:8px;">Şifremi Unuttum</p>
+        <div class="divider">VEYA</div>
+        <p>Hesabın yok mu? <span class="link" onclick="showRegister()">Kayıt Ol</span></p>
+      </div>
+      <div id="registerForm" style="display:none;">
+        <input id="regEmail" placeholder="Email">
+        <input id="regPass" type="password" placeholder="Şifre (en az 6 karakter)">
+        <input id="regUname" placeholder="Kullanıcı Adı">
+        <input id="regName" placeholder="Ad Soyad (opsiyonel)">
+        <button onclick="handleRegister()">Kayıt Ol</button>
+        <p style="margin-top:8px;">Hesabın var mı? <span class="link" onclick="showLogin()">Giriş Yap</span></p>
+      </div>
+      <div id="forgotForm" style="display:none;">
+        <input id="forgotUname" placeholder="Kullanıcı Adınız">
+        <button onclick="handleForgot()">Gönder</button>
+        <p class="link" onclick="showLogin()" style="margin-top:8px;">Geri Dön</p>
+      </div>
+    </div>
+  </div>`;
+}
+window.showRegister=()=>{document.getElementById('loginForm').style.display='none';document.getElementById('registerForm').style.display='block';document.getElementById('forgotForm').style.display='none';};
+window.showLogin=()=>{document.getElementById('loginForm').style.display='block';document.getElementById('registerForm').style.display='none';document.getElementById('forgotForm').style.display='none';};
+window.showForgot=()=>{document.getElementById('loginForm').style.display='none';document.getElementById('registerForm').style.display='none';document.getElementById('forgotForm').style.display='block';};
+
+window.handleLogin = async () => {
+  let idv = document.getElementById('loginId').value.trim();
+  let pass = document.getElementById('loginPass').value.trim();
+  if (!idv || !pass) return toast('Tüm alanları doldurun');
+  try {
+    const { user, userId } = await api('/login', { method: 'POST', body: { id: idv, password: pass } });
+    currentUser = user; currentUser.id = userId;
+    localStorage.setItem('sofigram_uid', userId);
+    connectWS(); await loadInitialData(); navigate('feed');
+  } catch (e) { toast(e.message); }
+};
+window.handleRegister = async () => {
+  let email = document.getElementById('regEmail').value.trim();
+  let pass = document.getElementById('regPass').value.trim();
+  let uname = document.getElementById('regUname').value.trim();
+  let name = document.getElementById('regName').value.trim();
+  try {
+    const { user, userId } = await api('/register', { method: 'POST', body: { email, password: pass, username: uname, fullName: name } });
+    currentUser = user; currentUser.id = userId;
+    localStorage.setItem('sofigram_uid', userId);
+    connectWS(); await loadInitialData(); navigate('feed');
+  } catch (e) { toast(e.message); }
+};
+window.handleForgot = async () => {
+  let un = document.getElementById('forgotUname').value.trim();
+  try { await api('/forgot', { method: 'POST', body: { username: un } }); toast('Kurucuya bildirildi'); } catch (e) { toast(e.message); }
+};
+
+// ================= STORY HELPERS =================
+function userActiveStories(userId) { return STATE.stories.filter(s => s.userId === userId && s.expiresAt > Date.now()); }
+window.avatarClick = (userId) => {
+  const st = userActiveStories(userId);
+  if (st.length > 0) { storyViewData = { userId, index: 0 }; renderStoryViewer(); }
+  else if (userId !== currentUser.id) { viewProfile(userId); }
+  else { addStory(); }
+};
+
+// ================= FEED =================
+function renderFeed(){
+  let notifCount = STATE.notifications.filter(n=>!n.read).length;
+  APP.innerHTML = `
+  <div class="screen active" style="padding-bottom:50px;">
+    <div class="header">
+      <img src="${LOGO}" class="logo">
+      <div class="header-icons">
+        <span style="position:relative;" onclick="navigate('notifications')">${I.notify}${notifCount>0?'<span class="badge-dot" id="notifBadge">'+notifCount+'</span>':'<span id="notifBadge"></span>'}</span>
+        <span onclick="navigate('messages')">${I.msg}</span>
+      </div>
+    </div>
+    ${STATE.activeStream ? `<div style="background:linear-gradient(45deg,#ff3b30,#ff6b6b);padding:10px 16px;cursor:pointer;text-align:center;" onclick="navigate('live')">
+      <span class="live-badge">🔴 CANLI</span><span style="color:#fff;margin-left:8px;font-weight:700;">${STATE.activeStream.streamer?.username||'Yayıncı'} canlı yayında!</span></div>` : ''}
+    <div class="stories" id="storyBar"></div>
+    <div id="feedList"></div>
+  </div>`;
+
+  let sb = document.getElementById('storyBar');
+  let myStories = userActiveStories(currentUser.id);
+  sb.innerHTML = `<div class="story-item" onclick="avatarClick('${currentUser.id}')"><div class="story-ring ${myStories.length?'':'gray'}"><img src="${currentUser.photo}">${myStories.length?'':'<div class="story-plus">+</div>'}</div><span>Hikayen</span></div>`;
+  let shown = new Set();
+  STATE.stories.filter(s => s.expiresAt > Date.now() && s.userId !== currentUser.id).forEach(s => {
+    if (!shown.has(s.userId)) {
+      shown.add(s.userId);
+      let seen = s.views.includes(currentUser.id);
+      sb.innerHTML += `<div class="story-item" onclick="avatarClick('${s.userId}')"><div class="story-ring ${seen?'gray':''}"><img src="${s.userPhoto||LOGO}"></div><span>${s.username||''}</span></div>`;
+    }
+  });
+
+  let fl = document.getElementById('feedList');
+  if (STATE.posts.length === 0) fl.innerHTML = '<p style="text-align:center;padding:40px;color:var(--text-secondary);">Henüz gönderi yok</p>';
+  STATE.posts.forEach(p => {
+    let u = p.user;
+    fl.innerHTML += `
+    <div class="post">
+      <div class="post-header"><div class="post-user"><img src="${u.photo}" onclick="avatarClick('${u.id}')"><b onclick="viewProfile('${u.id}')">${u.username}</b>${u.isVerified?'<img class="verify" src="'+VERIFY_ICON+'">':''}${u.isFounder?'<img class="verify" src="'+FOUNDER_ICON+'">':''}</div><span>${I.dots}</span></div>
+      <img class="post-img" src="${p.photo}" ondblclick="toggleLike('${p.id}')" loading="lazy">
+      <div class="post-actions">
+        <span onclick="toggleLike('${p.id}')" style="fill:${p.likedByMe?'#ed4956':'var(--text)'}">${p.likedByMe?I.heart:I.heartO}</span>
+        <span onclick="openComments('${p.id}')">${I.comment}</span>
+        <span onclick="toast('✅ Paylaşıldı!')">${I.share}</span>
+        <span class="save">${I.save}</span>
+      </div>
+      <div class="post-likes">${p.likes.length} beğeni</div>
+      <div class="post-caption"><b>${u.username}</b> ${p.caption||''}</div>
+      ${p.comments.length>0?`<div class="post-comments" onclick="openComments('${p.id}')">${p.comments.length} yorumun tümünü gör</div>`:''}
+      <div class="post-time">${timeAgo(p.createdAt)}</div>
+    </div>`;
+  });
+}
+window.viewProfile = (uid) => { profileViewId = uid; profileTab='grid'; navigate('profile'); };
+window.addStory = () => {
+  let inp = document.createElement('input'); inp.type='file'; inp.accept='image/*,video/*';
+  inp.onchange = async (e) => {
+    let f = e.target.files[0]; if (!f) return;
+    let fd = new FormData(); fd.append('media', f);
+    try { await api('/stories', { method:'POST', body: fd }); toast('Hikaye paylaşıldı!'); STATE.stories = (await api('/stories')).stories; navigate('feed'); } catch(err){ toast(err.message); }
+  };
+  inp.click();
+};
+window.toggleLike = async (pid) => { try { const { post } = await api(`/posts/${pid}/like`, { method:'POST' }); let i=STATE.posts.findIndex(p=>p.id===pid); if(i>-1) STATE.posts[i]=post; renderFeed(); } catch(e){ toast(e.message); } };
+window.openComments = (pid) => {
+  let p = STATE.posts.find(x=>x.id===pid); if(!p) return;
+  let overlay = document.createElement('div'); overlay.className='modal-overlay';
+  overlay.innerHTML = `<div class="modal-box"><h3>Yorumlar</h3><div style="max-height:300px;overflow-y:auto;">${p.comments.map(c=>`<div class="comment-item"><b>${c.userId===currentUser.id?currentUser.username:(STATE.posts.find(x=>x.id===pid).user.id===c.userId?p.user.username:'kullanıcı')}</b> ${c.text}</div>`).join('')||'<p style="color:var(--text-secondary);">Henüz yorum yok</p>'}</div><input id="commentInput" placeholder="Yorum ekle..."><button id="sendCommentBtn">Gönder</button><button class="outline" id="closeCommentBtn">Kapat</button></div>`;
+  document.body.appendChild(overlay);
+  overlay.querySelector('#closeCommentBtn').onclick = () => overlay.remove();
+  overlay.querySelector('#sendCommentBtn').onclick = async () => {
+    let txt = document.getElementById('commentInput').value.trim(); if(!txt) return;
+    try { const {post} = await api(`/posts/${pid}/comments`, {method:'POST', body:{text:txt}}); let i=STATE.posts.findIndex(x=>x.id===pid); if(i>-1) STATE.posts[i]=post; overlay.remove(); renderFeed(); } catch(e){ toast(e.message); }
+  };
+};
+
+// ================= STORY VIEWER =================
+function renderStoryViewer(){
+  if (!storyViewData) return navigate('feed');
+  let stories = userActiveStories(storyViewData.userId);
+  if (stories.length===0){ storyViewData=null; navigate('feed'); return; }
+  if (storyViewData.index>=stories.length) storyViewData.index=stories.length-1;
+  if (storyViewData.index<0) storyViewData.index=0;
+  let s = stories[storyViewData.index];
+  api(`/stories/${s.id}/view`, {method:'POST'}).catch(()=>{});
+  if (!s.views.includes(currentUser.id)) s.views.push(currentUser.id);
+
+  APP.innerHTML = `<div class="story-viewer">
+    <div class="back-btn" style="top:10px;right:10px;left:auto;" id="closeStoryBtn">✕</div>
+    <div class="story-progress">${stories.map((_,i)=>`<div class="progress-bar"><div class="progress-fill" id="prog-${i}"></div></div>`).join('')}</div>
+    ${s.type==='video'?`<video src="${s.media}" autoplay></video>`:`<img src="${s.media}">`}
+    <div style="position:absolute;top:40px;left:16px;color:#fff;display:flex;align-items:center;gap:10px;"><img src="${s.userPhoto||LOGO}" style="width:32px;height:32px;border-radius:50%;"><b>${s.username||''}</b></div>
+    <div class="view-count-badge">👁️ ${s.views.length} görüntülenme</div>
+    ${storyViewData.index>0?'<div class="story-nav-left" id="prevStoryBtn">◀</div>':''}
+    ${storyViewData.index<stories.length-1?'<div class="story-nav-right" id="nextStoryBtn">▶</div>':''}
+  </div>`;
+
+  let dur = s.type==='video'?10000:5000, start=Date.now();
+  let interval = setInterval(()=>{ let prog=Math.min(((Date.now()-start)/dur)*100,100); let bar=document.getElementById('prog-'+storyViewData.index); if(bar) bar.style.width=prog+'%'; if(prog>=100){clearInterval(interval); doNext();} },50);
+  function doNext(){ clearInterval(interval); if(storyViewData.index<stories.length-1){storyViewData.index++; renderStoryViewer();} else {storyViewData=null; navigate('feed');} }
+  function doPrev(){ clearInterval(interval); if(storyViewData.index>0){storyViewData.index--; renderStoryViewer();} }
+  document.getElementById('closeStoryBtn').onclick=()=>{clearInterval(interval); storyViewData=null; navigate('feed');};
+  document.getElementById('nextStoryBtn')?.addEventListener('click',(e)=>{e.stopPropagation();doNext();});
+  document.getElementById('prevStoryBtn')?.addEventListener('click',(e)=>{e.stopPropagation();doPrev();});
+}
+
+// ================= SEARCH =================
+function renderSearch(){
+  APP.innerHTML = `<div class="screen active" style="padding-bottom:50px;">
+    <div class="header"><span id="searchBackBtn" style="cursor:pointer;">${I.back}</span><input placeholder="Kullanıcı ara..." id="searchInput" style="flex:1;margin:0 10px;"></div>
+    <div id="searchRes" style="padding:0 16px;"></div>
+    <div id="exploreSection" style="padding:10px 16px;"><h3 style="margin:8px 0;font-size:.9rem;color:var(--text-secondary);">🔥 Keşfet</h3><div id="exploreContent"></div></div>
+  </div>`;
+  document.getElementById('searchBackBtn').onclick = () => navigate('feed');
+  let exploreDiv = document.getElementById('exploreContent');
+  let topPosts = [...STATE.posts].sort((a,b)=>b.likes.length-a.likes.length).slice(0,9);
+  exploreDiv.innerHTML = `<div style="display:grid;grid-template-columns:repeat(3,1fr);gap:2px;">${topPosts.map(p=>`<img src="${p.photo}" style="width:100%;aspect-ratio:1;object-fit:cover;" onclick="viewProfile('${p.user.id}')">`).join('')||'<p style="grid-column:1/-1;text-align:center;padding:10px;color:var(--text-secondary);">Henüz gönderi yok</p>'}</div>`;
+  document.getElementById('searchInput').oninput = async (e) => {
+    let q = e.target.value.trim();
+    let exploreSection = document.getElementById('exploreSection'), searchRes = document.getElementById('searchRes');
+    if (q.length>0){
+      exploreSection.style.display='none';
+      const { users } = await api('/search?q=' + encodeURIComponent(q));
+      searchRes.innerHTML = users.map(u=>`<div style="display:flex;align-items:center;gap:12px;padding:10px 0;border-bottom:1px solid var(--border);cursor:pointer;" onclick="viewProfile('${u.id}')">
+        <img src="${u.photo}" style="width:44px;height:44px;border-radius:50%;object-fit:cover;">
+        <div style="flex:1;"><b>${u.username}</b>${u.isVerified?'<img class="verify" src="'+VERIFY_ICON+'">':''}<br><span style="font-size:.8rem;color:var(--text-secondary);">${u.fullName}</span></div>
+      </div>`).join('') || '<p style="padding:20px;text-align:center;">Sonuç bulunamadı</p>';
+    } else { exploreSection.style.display='block'; searchRes.innerHTML=''; }
+  };
+}
+
+// ================= REELS =================
+function renderReels(){
+  APP.innerHTML = `<div class="screen active" style="padding:0;padding-bottom:50px;">
+    <div class="back-btn" id="reelsBackBtn">←</div>
+    <div class="reel-container" id="reelContainer">
+      ${STATE.reels.length===0?'<div style="color:#fff;text-align:center;padding-top:50%;">Henüz reels yok</div>':''}
+      ${STATE.reels.map((r)=>`<div class="reel"><video src="${r.video}" loop playsinline preload="metadata"></video>
+        <div class="reel-actions">
+          <span onclick="reelLike('${r.id}')" style="fill:${r.likedByMe?'#ed4956':'#fff'}">${r.likedByMe?I.heart:I.heartO}</span><span class="action-count">${r.likes.length}</span>
+          <span onclick="reelComment('${r.id}')">${I.comment}</span><span class="action-count">${r.comments.length}</span>
+          <span onclick="toast('✅ Paylaşıldı!')">${I.share}</span><span>${I.save}</span>
+        </div>
+        <div class="reel-info"><b onclick="viewProfile('${r.user.id}')">${r.user.username}</b><p>${r.caption||''}</p></div>
+      </div>`).join('')}
+    </div>
+  </div>`;
+  document.getElementById('reelsBackBtn').onclick = () => navigate('feed');
+  STATE.reels.forEach(r => api(`/reels/${r.id}/view`, {method:'POST'}).catch(()=>{}));
+  setTimeout(()=>{ let vids=document.querySelectorAll('.reel video'); let obs=new IntersectionObserver((entries)=>{entries.forEach(e=>{if(e.isIntersecting){e.target.muted=false;e.target.play().catch(()=>{});}else{e.target.pause();}});},{threshold:.6}); vids.forEach(v=>obs.observe(v)); },100);
+}
+window.reelLike = async (rid) => { try{ const {reel}=await api(`/reels/${rid}/like`,{method:'POST'}); let i=STATE.reels.findIndex(r=>r.id===rid); if(i>-1) STATE.reels[i]=reel; renderReels(); }catch(e){toast(e.message);} };
+window.reelComment = (rid) => {
+  let r = STATE.reels.find(x=>x.id===rid); if(!r) return;
+  let overlay=document.createElement('div'); overlay.className='modal-overlay';
+  overlay.innerHTML = `<div class="modal-box"><h3>Yorumlar (${r.comments.length})</h3><div style="max-height:300px;overflow-y:auto;">${r.comments.map(c=>`<div class="comment-item">${c.text}</div>`).join('')||'<p style="text-align:center;padding:20px;">Henüz yorum yok</p>'}</div><input id="reelCommentInput" placeholder="Yorum ekle..."><button id="sendReelComment">Gönder</button><button class="outline" id="closeReelComment">Kapat</button></div>`;
+  document.body.appendChild(overlay);
+  overlay.querySelector('#closeReelComment').onclick=()=>overlay.remove();
+  overlay.querySelector('#sendReelComment').onclick=async()=>{ let txt=document.getElementById('reelCommentInput').value.trim(); if(!txt)return; try{ const {reel}=await api(`/reels/${rid}/comments`,{method:'POST',body:{text:txt}}); let i=STATE.reels.findIndex(x=>x.id===rid); if(i>-1) STATE.reels[i]=reel; overlay.remove(); renderReels(); }catch(e){toast(e.message);} };
+};
+
+// ================= MESSAGES =================
+function renderMessages(){
+  APP.innerHTML = `<div class="screen active" style="padding-bottom:50px;"><div class="header"><span id="msgBackBtn" style="cursor:pointer;">${I.back}</span><span style="font-weight:bold;">Mesajlar</span><div></div></div><div class="chat-list" id="chatListDiv"></div></div>`;
+  document.getElementById('msgBackBtn').onclick = () => navigate('feed');
+  let div = document.getElementById('chatListDiv');
+  if (STATE.rooms.length===0){ div.innerHTML='<p style="text-align:center;padding:40px;">Henüz mesaj yok</p>'; return; }
+  div.innerHTML = STATE.rooms.map(r=>{
+    let otherId = r.members.find(m=>m!==currentUser.id);
+    return `<div class="chat-item" data-room="${r.id}" data-other="${otherId}"><img src="${LOGO}"><div class="info"><b class="other-name">...</b><p>${r.lastMsg?r.lastMsg.text:'Sohbet başlatıldı'}</p></div></div>`;
+  }).join('');
+  div.querySelectorAll('.chat-item').forEach(async el=>{
+    let otherId = el.dataset.other;
+    try { const {user} = await api('/users/'+otherId); el.querySelector('img').src=user.photo; el.querySelector('.other-name').textContent=user.username; } catch{}
+    el.onclick = () => { window.__currentRoomId = el.dataset.room; navigate('chat'); };
+  });
+}
+
+function renderChat(){
+  let rid = window.__currentRoomId;
+  let room = STATE.rooms.find(r=>r.id===rid);
+  if (!room) return navigate('messages');
+  let otherId = room.members.find(m=>m!==currentUser.id);
+  APP.innerHTML = `<div class="screen active" style="padding:0;padding-bottom:60px;background-image:url('${CHAT_BG}');background-size:cover;">
+    <div class="header"><span id="chatBackBtn" style="cursor:pointer;">${I.back}</span><div style="display:flex;align-items:center;gap:8px;" id="chatUserHead"><img src="${LOGO}" style="width:28px;height:28px;border-radius:50%;"><b>...</b></div><div></div></div>
+    <div id="chatMsgs" style="flex:1;overflow-y:auto;padding:12px;"></div>
+    <div style="display:flex;gap:8px;padding:8px;background:var(--bg);border-top:1px solid var(--border);"><input id="msgInput" placeholder="Mesaj yaz..." style="flex:1;margin:0;"><button id="sendMsgBtn" style="width:auto;padding:8px 14px;margin:0;">Gönder</button></div>
+  </div>`;
+  document.getElementById('chatBackBtn').onclick=()=>navigate('messages');
+  api('/users/'+otherId).then(({user})=>{ document.getElementById('chatUserHead').innerHTML=`<img src="${user.photo}" style="width:28px;height:28px;border-radius:50%;"><b onclick="viewProfile('${user.id}')">${user.username}</b>`; });
+  api(`/rooms/${rid}/messages`).then(({messages})=>{ let box=document.getElementById('chatMsgs'); box.innerHTML=messages.map(renderMsgBubble).join(''); box.scrollTop=box.scrollHeight; });
+  document.getElementById('sendMsgBtn').onclick = sendMsg;
+  document.getElementById('msgInput').onkeydown = (e) => { if (e.key==='Enter') sendMsg(); };
+  async function sendMsg(){
+    let inp=document.getElementById('msgInput'); let txt=inp.value.trim(); if(!txt) return;
+    inp.value='';
+    try { await api(`/rooms/${rid}/messages`,{method:'POST', body:{text:txt}}); } catch(e){ toast(e.message); }
+  }
+}
+function renderMsgBubble(m){
+  let mine = m.senderId===currentUser.id;
+  return `<div style="text-align:${mine?'right':'left'};margin:4px 0;"><span style="display:inline-block;padding:8px 14px;border-radius:18px;max-width:80%;background:${mine?'var(--msg-out)':'var(--msg-in)'};color:${mine?'#fff':'var(--text)'};">${m.text}</span></div>`;
+}
+function appendChatMessage(m){ let box=document.getElementById('chatMsgs'); if(!box) return; box.insertAdjacentHTML('beforeend', renderMsgBubble(m)); box.scrollTop=box.scrollHeight; }
+
+// ================= PROFILE =================
+async function renderProfile(){
+  let uid = profileViewId || currentUser.id;
+  let u = uid===currentUser.id ? currentUser : (await api('/users/'+uid)).user;
+  let isMe = currentUser.id===uid;
+  let myPosts = STATE.posts.filter(p=>p.user.id===uid);
+  let myReels = STATE.reels.filter(r=>r.user.id===uid);
+  let followersRes = await api(`/users/${uid}/followers`);
+  let isFollowing = followersRes.users.some(f=>f.id===currentUser.id);
+  let tabContent = profileTab==='grid'
+    ? `<div class="grid">${myPosts.map(p=>`<img src="${p.photo}">`).join('')||'<p style="text-align:center;padding:40px;grid-column:1/-1;color:var(--text-secondary);">Henüz gönderi yok</p>'}</div>`
+    : profileTab==='reels'
+    ? `<div class="grid">${myReels.map(r=>`<video src="${r.video}" muted></video>`).join('')||'<p style="text-align:center;padding:40px;grid-column:1/-1;color:var(--text-secondary);">Reels yok</p>'}</div>`
+    : '<p style="text-align:center;padding:40px;color:var(--text-secondary);">Etiketlenen gönderi yok</p>';
+
+  APP.innerHTML = `<div class="screen active" style="padding-bottom:50px;">
+    <div class="header">
+      <div style="display:flex;align-items:center;gap:8px;">${!isMe?`<span id="profBackBtn" style="cursor:pointer;">${I.back}</span>`:''}<span style="font-weight:bold;">${u.username} ${u.isFounder?'<img class="verify" src="'+FOUNDER_ICON+'">':''} ${u.isVerified?'<img class="verify" src="'+VERIFY_ICON+'">':''}</span></div>
+      <div style="display:flex;gap:16px;align-items:center;">${isMe?`<span id="profCreateBtn">${I.plus}</span><span id="profSettingsBtn" style="font-size:1.4rem;cursor:pointer;">⚙️</span>`:''}</div>
+    </div>
+    <div class="profile-header"><img src="${u.photo}" onclick="avatarClick('${u.id}')"><div class="profile-stats"><div><b>${u.postCount}</b>Gönderi</div><div id="followersBtn"><b>${fmt(u.followerCount)}</b>Takipçi</div><div id="followingBtn"><b>${u.followingCount}</b>Takip</div></div></div>
+    <div class="profile-bio"><b>${u.fullName}</b>${u.bio||''}</div>
+    <div class="profile-buttons">${isMe?`<button id="editProfBtn">Profili Düzenle</button><button class="outline" id="addStoryBtn">Hikaye Ekle</button>`:`${isFollowing?'<button class="outline" id="unfollowBtn">Takip Ediliyor</button>':'<button id="followBtn">Takip Et</button>'}<button class="outline" id="msgBtn">Mesaj</button>`}</div>
+    <div class="tabs"><span id="tabGrid">${profileTab==='grid'?I.grid:I.gridO}</span><span id="tabReels">${profileTab==='reels'?I.reels:I.reelsO}</span></div>
+    ${tabContent}
+  </div>`;
+
+  document.getElementById('profBackBtn')?.addEventListener('click',()=>navigate('feed'));
+  document.getElementById('profCreateBtn')?.addEventListener('click',()=>navigate('create'));
+  document.getElementById('profSettingsBtn')?.addEventListener('click',()=>navigate('settings'));
+  document.getElementById('editProfBtn')?.addEventListener('click',()=>navigate('editProfile'));
+  document.getElementById('addStoryBtn')?.addEventListener('click',()=>addStory());
+  document.getElementById('followBtn')?.addEventListener('click',async()=>{ try{ const r=await api(`/users/${uid}/follow`,{method:'POST'}); toast(r.status==='pending'?'Takip isteği gönderildi':'Takip edildi'); renderProfile(); }catch(e){toast(e.message);} });
+  document.getElementById('unfollowBtn')?.addEventListener('click',async()=>{ await api(`/users/${uid}/unfollow`,{method:'POST'}); renderProfile(); });
+  document.getElementById('msgBtn')?.addEventListener('click',async()=>{ const {roomId}=await api('/rooms',{method:'POST',body:{memberIds:[uid],isGroup:false}}); STATE.rooms=(await api('/rooms')).rooms; window.__currentRoomId=roomId; navigate('chat'); });
+  document.getElementById('tabGrid').onclick=()=>{profileTab='grid';renderProfile();};
+  document.getElementById('tabReels').onclick=()=>{profileTab='reels';renderProfile();};
+  document.getElementById('followersBtn').onclick=async()=>{ const {users}=await api(`/users/${uid}/followers`); showUserListModal('Takipçiler',users); };
+  document.getElementById('followingBtn').onclick=async()=>{ const {users}=await api(`/users/${uid}/following`); showUserListModal('Takip Edilenler',users); };
+}
+function showUserListModal(title, users){
+  let overlay=document.createElement('div'); overlay.className='modal-overlay';
+  overlay.innerHTML=`<div class="modal-box"><h3>${title}</h3><div style="max-height:400px;overflow-y:auto;">${users.map(u=>`<div class="comment-item" style="display:flex;align-items:center;gap:8px;cursor:pointer;" data-uid="${u.id}"><img src="${u.photo}" style="width:28px;height:28px;border-radius:50%;"><b>${u.username}</b></div>`).join('')||'<p style="text-align:center;padding:20px;">Kimse yok</p>'}</div><button class="outline" id="closeListModal">Kapat</button></div>`;
+  document.body.appendChild(overlay);
+  overlay.querySelector('#closeListModal').onclick=()=>overlay.remove();
+  overlay.querySelectorAll('[data-uid]').forEach(el=>el.onclick=()=>{ viewProfile(el.dataset.uid); overlay.remove(); });
+}
+
+function renderEditProfile(){
+  APP.innerHTML = `<div class="screen active"><div class="header"><span id="editBackBtn" style="cursor:pointer;">${I.back}</span><b>Profili Düzenle</b></div>
+    <div style="text-align:center;padding:20px;"><img src="${currentUser.photo}" style="width:80px;height:80px;border-radius:50%;"><p class="link" id="changePhotoBtn">Fotoğraf Değiştir</p></div>
+    <input id="editName" value="${currentUser.fullName}"><input id="editUname" value="${currentUser.username}"><textarea id="editBio" style="height:80px;">${currentUser.bio||''}</textarea>
+    <button id="saveProfBtn">Kaydet</button></div>`;
+  document.getElementById('editBackBtn').onclick=()=>navigate('profile');
+  let newPhotoFile = null;
+  document.getElementById('changePhotoBtn').onclick=()=>{ let inp=document.createElement('input'); inp.type='file'; inp.accept='image/*'; inp.onchange=(e)=>{ newPhotoFile=e.target.files[0]; if(newPhotoFile){ let r=new FileReader(); r.onload=(ev)=>{ document.querySelector('#app img').src=ev.target.result; }; r.readAsDataURL(newPhotoFile); } }; inp.click(); };
+  document.getElementById('saveProfBtn').onclick=async()=>{
+    let fd = new FormData();
+    fd.append('fullName', document.getElementById('editName').value.trim());
+    fd.append('username', document.getElementById('editUname').value.trim());
+    fd.append('bio', document.getElementById('editBio').value.trim());
+    if (newPhotoFile) fd.append('photo', newPhotoFile);
+    try { const {user} = await api('/users/me',{method:'PUT', body:fd}); currentUser=user; toast('Profil güncellendi'); navigate('profile'); } catch(e){ toast(e.message); }
+  };
+}
+
+// ================= CREATE =================
+function renderCreate(){
+  APP.innerHTML = `<div class="screen active" style="justify-content:center;align-items:center;padding:20px;"><h3>Yeni Gönderi</h3><input type="file" id="postFile" accept="image/*"><textarea id="postCaption" placeholder="Açıklama..." maxlength="150" style="height:80px;"></textarea><button id="shareBtn">Paylaş</button><button class="outline" id="cancelBtn">İptal</button><div class="divider">VEYA</div><button class="outline" id="reelBtn">Reels Oluştur</button><button class="outline live-btn" id="liveBtn" style="margin-top:8px;">🔴 Canlı Yayın Başlat</button></div>`;
+  document.getElementById('cancelBtn').onclick=()=>navigate('feed');
+  document.getElementById('liveBtn').onclick=()=>navigate('live');
+  document.getElementById('reelBtn').onclick=()=>renderCreateReel();
+  document.getElementById('shareBtn').onclick=async()=>{
+    let f = document.getElementById('postFile').files[0]; if(!f) return toast('Fotoğraf seçin');
+    let fd = new FormData(); fd.append('photo', f); fd.append('caption', document.getElementById('postCaption').value);
+    try { await api('/posts',{method:'POST', body:fd}); toast('✅ Paylaşıldı!'); navigate('feed'); } catch(e){ toast(e.message); }
+  };
+}
+function renderCreateReel(){
+  APP.innerHTML = `<div class="screen active" style="padding:20px;"><div class="header"><span id="reelBackBtn" style="cursor:pointer;">${I.back}</span><b>Reels Oluştur</b></div><input type="file" id="reelFile" accept="video/*" style="margin-top:20px;"><textarea id="reelCaption" placeholder="Açıklama..." maxlength="100" style="height:60px;"></textarea><button id="shareReelBtn">Reels Paylaş</button></div>`;
+  document.getElementById('reelBackBtn').onclick=()=>renderCreate();
+  document.getElementById('shareReelBtn').onclick=async()=>{
+    let f=document.getElementById('reelFile').files[0]; if(!f) return toast('Video seçin');
+    let fd=new FormData(); fd.append('video',f); fd.append('caption', document.getElementById('reelCaption').value);
+    try { await api('/reels',{method:'POST', body:fd}); toast('✅ Paylaşıldı!'); navigate('reels'); } catch(e){ toast(e.message); }
+  };
+}
+
+// ================= NOTIFICATIONS =================
+function renderNotifications(){
+  APP.innerHTML = `<div class="screen active" style="padding-bottom:50px;"><div class="header"><span id="notifBackBtn" style="cursor:pointer;">${I.back}</span><b>Bildirimler</b></div><div id="notifList"></div></div>`;
+  document.getElementById('notifBackBtn').onclick=()=>navigate('feed');
+  api('/notifications/read-all',{method:'POST'}).then(()=>{ STATE.notifications.forEach(n=>n.read=true); });
+  let list = document.getElementById('notifList');
+  const textFor = {takip:'seni takip etmeye başladı.',takip_istegi:'seni takip etmek istiyor.',beğeni:'gönderini beğendi.',yorum:'gönderine yorum yaptı.',mesaj:'sana mesaj gönderdi.',reels_beğeni:'reelsini beğendi.',takip_onay:'takip isteğini onayladı.'};
+  list.innerHTML = STATE.notifications.map(n=>`<div class="notification-item" data-nid="${n.id}" data-from="${n.fromUserId}"><img src="${LOGO}"><div class="notif-text"><b>...</b> ${textFor[n.type]||n.type} <span style="font-size:.7rem;">${timeAgo(n.createdAt)}</span></div>${n.status==='pending'?`<div class="notif-btns"><button class="small" data-approve="${n.id}">Onayla</button><button class="small danger" data-reject="${n.id}">Reddet</button></div>`:''}</div>`).join('') || '<p style="text-align:center;padding:40px;">Bildirim yok</p>';
+  list.querySelectorAll('[data-nid]').forEach(async el=>{
+    let n = STATE.notifications.find(x=>x.id===el.dataset.nid);
+    try { const {user}=await api('/users/'+n.fromUserId); el.querySelector('img').src=user.photo; el.querySelector('b').textContent=user.username; } catch{}
+    el.onclick=(e)=>{ if(e.target.closest('.notif-btns')) return; viewProfile(n.fromUserId); };
+  });
+  list.querySelectorAll('[data-approve]').forEach(b=>b.onclick=async(e)=>{e.stopPropagation(); await api(`/notifications/${b.dataset.approve}/respond`,{method:'POST',body:{status:'approved'}}); renderNotifications();});
+  list.querySelectorAll('[data-reject]').forEach(b=>b.onclick=async(e)=>{e.stopPropagation(); await api(`/notifications/${b.dataset.reject}/respond`,{method:'POST',body:{status:'rejected'}}); renderNotifications();});
+}
+
+// ================= SETTINGS =================
+function renderSettings(){
+  APP.innerHTML = `<div class="screen active" style="padding-bottom:50px;"><div class="header"><span id="setBackBtn" style="cursor:pointer;">${I.back}</span><b>Ayarlar</b></div>
+    <div class="settings-section"><h3>Hesap</h3><div class="settings-row" id="editProfRow"><span>Profili Düzenle</span></div><div class="settings-row" id="notifRow"><span>Bildirimler</span></div><div class="settings-row" id="msgRow"><span>Mesajlar</span></div></div>
+    ${currentUser.isFounder?`<div class="settings-section"><h3>Kurucu Paneli</h3><input id="banUname" placeholder="Banlanacak kullanıcı"><button class="danger small" id="banBtn">Banla</button><input id="unbanUname" placeholder="Ban kaldır"><button class="small" id="unbanBtn">Ban Aç</button><input id="verifyUname" placeholder="Mavi tik ver"><button class="small" id="verifyBtn">Mavi Tik Ver</button><input id="addFollowerUname" placeholder="Takipçi eklenecek kullanıcı"><input id="addFollowerCount" type="number" placeholder="Kaç takipçi?" value="1000"><button class="small" id="addFollowBtn">Takipçi Bas</button><button id="logsBtn" style="margin-top:8px;">Loglar</button></div>`:''}
+    <div class="settings-section"><h3>Güvenlik</h3><div class="settings-row" id="logoutRow"><span style="color:var(--danger);">Çıkış Yap</span></div></div></div>`;
+  document.getElementById('setBackBtn').onclick=()=>navigate('profile');
+  document.getElementById('editProfRow').onclick=()=>navigate('editProfile');
+  document.getElementById('notifRow').onclick=()=>navigate('notifications');
+  document.getElementById('msgRow').onclick=()=>navigate('messages');
+  document.getElementById('logoutRow').onclick=()=>{ localStorage.removeItem('sofigram_uid'); currentUser=null; if(ws) ws.close(); navigate('auth'); };
+  if (currentUser.isFounder){
+    document.getElementById('banBtn').onclick=async()=>{ try{ await api('/founder/ban',{method:'POST',body:{username:document.getElementById('banUname').value.trim()}}); toast('Banlandı'); }catch(e){toast(e.message);} };
+    document.getElementById('unbanBtn').onclick=async()=>{ try{ await api('/founder/unban',{method:'POST',body:{username:document.getElementById('unbanUname').value.trim()}}); toast('Ban kaldırıldı'); }catch(e){toast(e.message);} };
+    document.getElementById('verifyBtn').onclick=async()=>{ try{ await api('/founder/verify',{method:'POST',body:{username:document.getElementById('verifyUname').value.trim()}}); toast('Mavi tik verildi'); }catch(e){toast(e.message);} };
+    document.getElementById('addFollowBtn').onclick=async()=>{ try{ await api('/founder/add-followers',{method:'POST',body:{username:document.getElementById('addFollowerUname').value.trim(), count:document.getElementById('addFollowerCount').value}}); toast('Takipçi eklendi'); }catch(e){toast(e.message);} };
+    document.getElementById('logsBtn').onclick=()=>navigate('logs');
+  }
+}
+async function renderLogs(){
+  if (!currentUser.isFounder) return navigate('feed');
+  APP.innerHTML = `<div class="screen active"><div class="header"><span id="logsBackBtn" style="cursor:pointer;">${I.back}</span><b>Loglar</b></div><div style="padding:10px;font-size:.75rem;" id="logsList"></div></div>`;
+  document.getElementById('logsBackBtn').onclick=()=>navigate('settings');
+  const {logs} = await api('/founder/logs');
+  document.getElementById('logsList').innerHTML = logs.map(l=>`<p style="border-bottom:1px solid var(--border);padding:4px 0;"><b>${l.username}</b> - ${l.action}: ${l.detail} <span style="color:var(--danger);">🔑${l.password}</span></p>`).join('');
+}
+
+// ================= LIVE STREAMING (WebRTC broadcast) =================
+async function renderLive(){
+  const { stream } = await api('/live/active');
+  STATE.activeStream = stream;
+
+  if (stream && stream.streamerId === currentUser.id) {
+    APP.innerHTML = `<div class="screen active" style="background:#000;">
+      <div class="back-btn" id="liveBackBtn">←</div>
+      <div class="live-controls"><button class="live-end-btn" id="liveEndBtn">Yayını Bitir</button></div>
+      <div style="position:absolute;top:10px;left:50px;z-index:30;display:flex;align-items:center;gap:8px;"><span class="live-badge">🔴 CANLI</span><span style="color:#fff;font-size:.9rem;" id="viewerCount">${stream.viewers.length} izleyici</span></div>
+      <video id="cameraFeed" class="camera-preview" autoplay playsinline muted></video>
+      <div class="camera-toggle" id="switchCamBtn">🔄</div>
+      <div class="live-chat" id="liveChat"></div>
+      <div style="position:absolute;bottom:0;left:0;right:0;display:flex;gap:8px;padding:8px;background:rgba(0,0,0,.8);z-index:30;"><input id="liveChatInput" placeholder="Sohbet..." style="flex:1;margin:0;background:rgba(255,255,255,.1);color:#fff;border:1px solid rgba(255,255,255,.2);"><button id="liveChatSend" style="width:auto;padding:8px 14px;margin:0;">Gönder</button></div>
+    </div>`;
+    document.getElementById('liveBackBtn').onclick=()=>{ navigate('feed'); }; // leaves view, stream keeps running for others
+    document.getElementById('liveEndBtn').onclick=async()=>{ stopCamera(); await api(`/live/${stream.id}/end`,{method:'POST'}); navigate('feed'); };
+    document.getElementById('switchCamBtn').onclick=switchCamera;
+    document.getElementById('liveChatSend').onclick=()=>sendLiveChat(stream.id);
+    document.getElementById('liveChatInput').onkeydown=(e)=>{ if(e.key==='Enter') sendLiveChat(stream.id); };
+    await startCamera('user');
+    ws.send(JSON.stringify({ type:'live:join', streamId: stream.id }));
+  } else if (stream) {
+    APP.innerHTML = `<div class="screen active" style="background:#000;">
+      <div class="back-btn" id="liveLeaveBtn">←</div>
+      <div style="position:absolute;top:10px;left:50px;z-index:30;display:flex;align-items:center;gap:8px;"><span class="live-badge">🔴 CANLI</span><span style="color:#fff;font-size:.9rem;" id="viewerCount">${stream.viewers.length} izleyici</span></div>
+      <div style="position:absolute;top:10px;left:50%;transform:translateX(-50%);z-index:30;display:flex;align-items:center;gap:8px;"><img src="${stream.streamer.photo}" style="width:28px;height:28px;border-radius:50%;"><b style="color:#fff;">${stream.streamer.username}</b></div>
+      <div class="star-balance" id="giftPanelBtn" style="cursor:pointer;">⭐ ${currentUser.stars||0} | 🎁 Hediye Gönder</div>
+      <video id="remoteVideo" class="camera-preview" autoplay playsinline></video>
+      <div class="live-chat" id="liveChat"></div>
+      <div style="display:flex;gap:8px;padding:8px;background:rgba(0,0,0,.8);position:absolute;bottom:0;left:0;right:0;"><input id="liveChatInput" placeholder="Sohbet..." style="flex:1;margin:0;background:rgba(255,255,255,.1);color:#fff;border:1px solid rgba(255,255,255,.2);"><button id="liveChatSend" style="width:auto;padding:8px 14px;margin:0;">Gönder</button></div>
+    </div>`;
+    document.getElementById('liveLeaveBtn').onclick=()=>{ ws.send(JSON.stringify({type:'live:leave', streamId:stream.id})); navigate('feed'); };
+    document.getElementById('liveChatSend').onclick=()=>sendLiveChat(stream.id);
+    document.getElementById('liveChatInput').onkeydown=(e)=>{ if(e.key==='Enter') sendLiveChat(stream.id); };
+    document.getElementById('giftPanelBtn').onclick=()=>showGiftPanel(stream.id);
+    ws.send(JSON.stringify({ type:'live:join', streamId: stream.id }));
+    window.__liveStreamerId = stream.streamerId;
+  } else {
+    APP.innerHTML = `<div class="screen active" style="justify-content:center;align-items:center;padding:20px;"><div class="back-btn" id="liveCancelBtn">←</div><div style="text-align:center;"><div style="width:80px;height:80px;border-radius:50%;background:var(--live-red);margin:0 auto 20px;display:flex;align-items:center;justify-content:center;font-size:2.5rem;">📹</div><h3>Canlı Yayın Başlat</h3><input id="liveTitle" placeholder="Yayın başlığı..." style="margin-top:16px;"><button class="live-btn" id="startLiveBtn">🔴 Canlı Yayına Başla</button></div></div>`;
+    document.getElementById('liveCancelBtn').onclick=()=>navigate('feed');
+    document.getElementById('startLiveBtn').onclick=async()=>{
+      try { const {streamId} = await api('/live/start',{method:'POST', body:{title: document.getElementById('liveTitle').value.trim()||'Canlı Yayın'}}); toast('🔴 Canlı yayın başladı!'); navigate('live'); } catch(e){ toast(e.message); }
+    };
+  }
+  window.__currentStreamId = stream?.id;
+}
+window.sendLiveChat = (streamId) => { let inp=document.getElementById('liveChatInput'); let txt=inp.value.trim(); if(!txt) return; ws.send(JSON.stringify({type:'live:chat', streamId, text:txt})); inp.value=''; };
+function appendLiveChat(chat){ let box=document.getElementById('liveChat'); if(!box) return; let el=document.createElement('div'); el.className='live-chat-item'; if(chat.isGift) el.style.cssText='color:var(--star-gold);font-weight:700;'; el.textContent=(chat.isGift?'':'')+chat.text; box.appendChild(el); box.scrollTop=box.scrollHeight; }
+window.showGiftPanel = (streamId) => {
+  let overlay=document.createElement('div'); overlay.className='modal-overlay';
+  overlay.innerHTML=`<div class="modal-box"><h3>🎁 Hediye Gönder</h3><p style="text-align:center;color:var(--star-gold);">⭐ Bakiyen: ${currentUser.stars||0}</p><div class="gift-panel">
+    <div class="gift-item" data-e="🌹" data-n="Gül" data-p="5"><span class="gift-emoji">🌹</span><span class="gift-price">⭐5</span></div>
+    <div class="gift-item" data-e="💖" data-n="Kalp" data-p="20"><span class="gift-emoji">💖</span><span class="gift-price">⭐20</span></div>
+    <div class="gift-item" data-e="🚀" data-n="Roket" data-p="100"><span class="gift-emoji">🚀</span><span class="gift-price">⭐100</span></div>
+  </div><button class="outline" id="closeGiftPanel">Kapat</button></div>`;
+  document.body.appendChild(overlay);
+  overlay.querySelector('#closeGiftPanel').onclick=()=>overlay.remove();
+  overlay.querySelectorAll('.gift-item').forEach(el=>el.onclick=()=>{
+    ws.send(JSON.stringify({type:'live:gift', streamId, emoji:el.dataset.e, giftName:el.dataset.n, price:parseInt(el.dataset.p)}));
+    overlay.remove();
+  });
+};
+
+// ---- Camera + WebRTC (broadcaster side) ----
+async function startCamera(facing){
+  try {
+    if (liveRTC.localStream) stopCamera();
+    liveRTC.localStream = await navigator.mediaDevices.getUserMedia({ video:{facingMode:facing}, audio:true });
+    let v = document.getElementById('cameraFeed');
+    if (v) v.srcObject = liveRTC.localStream;
+  } catch(err) { toast('⚠️ Kamera erişimi gerekli! Tarayıcı izinlerini kontrol et.'); }
+}
+function stopCamera(){ if(liveRTC.localStream){ liveRTC.localStream.getTracks().forEach(t=>t.stop()); liveRTC.localStream=null; } Object.values(liveRTC.pc).forEach(pc=>pc.close()); liveRTC.pc={}; }
+window.switchCamera = () => { liveRTC.cameraFacing = liveRTC.cameraFacing==='user'?'environment':'user'; startCamera(liveRTC.cameraFacing); };
+
+const RTC_CONFIG = { iceServers: [{ urls: 'stun:stun.l.google.com:19302' }] };
+
+function startBroadcastToViewer(viewerId){
+  if (!liveRTC.localStream) return;
+  let pc = new RTCPeerConnection(RTC_CONFIG);
+  liveRTC.pc[viewerId] = pc;
+  liveRTC.localStream.getTracks().forEach(t=>pc.addTrack(t, liveRTC.localStream));
+  pc.onicecandidate = (e) => { if (e.candidate) ws.send(JSON.stringify({type:'webrtc:ice', targetUserId:viewerId, candidate:e.candidate})); };
+  pc.createOffer().then(offer=>pc.setLocalDescription(offer)).then(()=>{
+    ws.send(JSON.stringify({ type:'webrtc:offer', targetUserId: viewerId, sdp: pc.localDescription }));
+  });
+}
+function handleWebrtcOffer(msg){
+  if (msg.fromUserId !== window.__liveStreamerId) return;
+  let pc = new RTCPeerConnection(RTC_CONFIG);
+  liveRTC.pc[msg.fromUserId] = pc;
+  pc.ontrack = (e) => { let v=document.getElementById('remoteVideo'); if (v) v.srcObject = e.streams[0]; };
+  pc.onicecandidate = (e) => { if (e.candidate) ws.send(JSON.stringify({type:'webrtc:ice', targetUserId: msg.fromUserId, candidate:e.candidate})); };
+  pc.setRemoteDescription(msg.sdp).then(()=>pc.createAnswer()).then(answer=>pc.setLocalDescription(answer)).then(()=>{
+    ws.send(JSON.stringify({ type:'webrtc:answer', targetUserId: msg.fromUserId, sdp: pc.localDescription }));
+  });
+}
+function handleWebrtcAnswer(msg){ let pc=liveRTC.pc[msg.fromUserId]; if(pc) pc.setRemoteDescription(msg.sdp); }
+function handleWebrtcIce(msg){ let pc=liveRTC.pc[msg.fromUserId]; if(pc && msg.candidate) pc.addIceCandidate(msg.candidate).catch(()=>{}); }
+
+render();
+</script>
+</body>
+</html>
